@@ -1,0 +1,177 @@
+<!--Marie Laborde-->
+<!--4/22/2017-->
+<!--HTML5-->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Large Pages on AIX</title>
+</head>
+<body>
+	<img src="https://www-03.ibm.com/systems/resources/systems_power_software_aix_logo_110x110.png">
+	<h1>Large Pages on AIX</h1>
+	<hr>
+	<nav>
+		<a href="#HOWTO">How do you set up large pages on AIX?</a>
+		<br>
+		<a href="#MONITOR">How do I monitor the usage of large pages on AIX?</a>
+		<br>
+		<a href="#APPUSE">How do I make my application use the large pages?</a> 
+		<br>
+		<a href="#NUMLRGPGS">Why doesn't the number of large pages remain static (or stay the same)?</a> 
+		<br>
+	</nav>
+	<hr>
+	<section>
+		<article>
+			<h2 id="HOWTO">How do you set up large pages on AIX?</h2>
+			<hr>
+		</article>
+	</section>
+	<div>
+		<p><h4>To determine which large page size (64 KB, 16 MB, or 16 GB) is supported on your system:</h4></p>
+		
+  		<i>pagesize -af</i>
+  		<br>
+		<p>64 KB large pages are enabled by default (if they are supported on your system):</p>
+		
+		<i>vmo -L  vmm_mpsize_support</i>
+		<p><h4>To enable 16 MB large pages on AIX (if they are supported on your system):</h4></p>
+		
+		<i>vmo -r -o lgpg_regions=<number> -o lgpg_size=16777216</i>
+		<i>shutdown -Fr</i>
+		<br>
+		<p><h4>To enable 16 GB large pages:<h4></p>
+		
+		<p>- On the managed system, go to:</p>
+		<i>Properties</i>
+		<br>
+		<i>Memory</i>
+		<br>
+		<i>Advanced Options</i>
+		<br>
+		<i>Show Details to change the number of 16 GB pages.</i>
+		<p>Assign 16 GB huge pages to a partition by changing the partition's profile.</p>
+		<a href="#top">Go Back to the Top</a>
+		<h3 id="MONITOR">How do I monitor the usage of large pages on AIX?</h3>
+		<hr>
+		<p><h4>To monitor memory pools and large pages:</h4></p>
+		<br>
+		<i>svmon</i>
+	 	<p>If 'PoolSize' decreases, run:</p>
+	 	<i>
+	 	  <p>kdb</p>
+          <p>memp *         //NUMFRB is the number of frames in the specific memory pool.</p>
+          <p>vmpool -l *    //LGPG_FREE is the amount of free large pages.</p>
+          <p>q              // To quit out of kdb.</p>
+
+		  <p>tprof -a -y <program> -O all 		//used for large page analysis</p>
+		</i>
+		<br>
+		<p>*Note: If you specify the <i>-y</i> flag, only the specified program and its descendents are profiled. Use the <i>-y</i> (Turns on the event-based profiling for only the specified command and its descendents) flag only with the <i>-E</i> (<mode> - Enables event-based profiling) or <i>-a</i> (Turns on the large page analysis) flag.
+		</p>
+
+		<p><h4>To determine if large pages are NOT being used:</h4>
+	 	<i>
+	 		<p>ipcs -mP			//Make note of the 'LGPG: -' field</p>
+  			<p>vmstat -l		//Make note of the 'alp' (Active Large Pages) column</p>
+  			<p>svmon			//Make note of the 'PageSize' and 'inuse' column.</p>
+	 	</i>
+		</p>
+		<br>
+		<a href="#top">Go Back to the Top</a>
+		<hr>
+	</div>
+	<div>
+		<h3 id="APPUSE">How do I make my application use the large pages?</h3>
+		<p>Run the following commands to use large pages:</p>
+		<ol>
+			<i>
+				chuser capabilities=CAP_BYPASS_RAC_VMM, CAP_PROPAGATE <user>
+  				lsuser -a capabilities <user>
+  				vmstat -l
+  			</i>
+  		</ol>
+		
+		<p>*Note: alp: Active Large Pages
+           flp: Free Large Pages
+		</p>
+		<br>
+		<p> as data and heap segments:</p>
+		<p> run <strong>ONE</strong> of the following commands:</p>
+		
+		<p> <i>ldedit -blpdata <executable_name></i></p>
+		<p> OR</p>
+		<p> <i>LDR_CNTRL=LARGE_PAGE=Y <command></i></p>
+		
+		<p><i>export LDR_CNTRL=LARGE_PAGE=Y@LARGE_PAGE_DATA=M</i></p>
+		<p>as shared memory:</p>
+		<p>Modify the application to request large pages for shared memory by:</p>
+		<ol>
+			specifying an appropriate value for the "size" parameter
+			passing the SHM_PAGE and SHM_PIN flags to the shmget() system call. 
+			running 'vmo -o v_pinshm=1' (which is a dynamic change, so NO system reboot is needed).
+		</ol>
+		<p>To see if the application is using large pages:</p>
+		
+		<i>truss -d -f -o /tmp/truss.out <executable name> -s 16777216 -p</i>
+		<br>
+		<a href="#top">Go Back to the Top</a>
+	</div>
+	<div>
+		<h3 id="NUMLRGPGS">Why doesn't the number of large pages remain static (or stay the same)?</h3>
+		<hr>
+		<p>The 'PoolSize' for large pages (from svmon output) is NOT supposed to remain static (or stay the same) if:
+		</p>
+		<p>- the system cannot fulfill a memory request from the 4 KB pages. VMM (Virtual Memory Manager) then:</p>
+		<ol>
+			searches for available large pages, 
+			converts them back to 4 KB pages, and 
+			fulfills the memory request.
+	    </ol>
+		<br>
+		<p>the system cannot fulfill a memory request from the 4K pages if memory pools are unbalanced. VMM then:</p>					
+		<ol>
+			searches for available large pages,
+			converts them back to 4 KB pages, and 
+			fulfills the memory request.
+		</ol>
+		<br>
+	    <p>
+	    	*Note: Once those large pages are converted to 4K, they do NOT get converted back to large pages (of a 64 KB, 16 MB, or 16 GB size) until the system is rebooted. So, this is working as designed. An error report will get created when converting a large page to 4 KB page:
+	    </p>
+		<br>
+	 	<p>LABEL:          LGPG_FREED</p>
+		<p>IDENTIFIER:     C4C3339D</p>
+		
+		<p>Date/Time:       Tue Oct 14 18:53:44 CDT 2008</p>
+		<p>Sequence Number: 3349</p>
+		<p>Machine Id:      00C517B04C00<p>
+		<p>Node Id:         medsg-min-prod-midr-1</p>
+		<p>Class:           S</p>
+		<p>Type:            INFO</p>
+		<p>Resource Name:   SYSVMM<p>
+		
+		<p>Description<p>
+		<p>ONE OR MORE LARGE PAGES HAS BEEN CONVERTED INTO PAGEABLE PAGES</p>
+		
+		<p>Probable Causes</p>
+		<p>System at or near pinned memory limit.</p>
+		
+ 		<p>Recommended Actions</p>
+ 		<p>Tune maxpin percentage or lgpg_regions.</p>
+ 		
+		<p>Detail Data</p>
+		<p>Number of large pages attempted to free:</p>
+        <p>             1</p>
+		<p>Number of large pages actually freed:</p>
+	</div>
+	<a href="#top">Go Back to the Top</a>
+	<footer>
+		<hr>
+		<img src="../../Responsive-Portfolio/Basic-Portfolio-master/images/Marie.JPG" width="100" height="100">
+		<p>Author Marie Laborde has worked in IBM's AIX Remote Technical Support Center for several years.</p>
+	</footer>
+</body>
+</html>

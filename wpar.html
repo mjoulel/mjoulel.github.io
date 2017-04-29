@@ -1,0 +1,434 @@
+<!--Marie Laborde-->
+<!--2/10/2016-->
+<!--HTML5-->
+<!--http://webtrain.austincc.edu/~mlaborde/index.html-->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>(FAQ) Frequently Asked Questions on WPAR (Workload Partitions)</title>
+</head>
+<body>
+	<img src="https://www-03.ibm.com/systems/resources/systems_power_software_aix_logo_110x110.png">
+	<h1>(FAQ) Frequently Asked Questions on WPAR (Workload Partitions)</h1>
+	<hr>
+	<nav>
+		<a href="#INTRO">Introduction</a>
+		<br>
+		<a href="#SystemWPAR">System WPARs</a>
+		<br>
+		<a href="#CREWPAR">CRE (Compatibility Runtime Environment) WPAR</a> 
+		<br>
+		<a href="#BOOTSET">WPAR with a bootset</a> 
+		<br>
+		<a href="#WPARNETWORK">WPAR with its own network</a>
+		<br>
+		<a href="#RBAC">Enhanced RBAC on a WPAR</a>
+		<br>
+		<a href="#APPWPAR">Application WPARs</a>
+	</nav>
+	<hr>
+	<section>
+		<article>
+			<h2 id="INTRO">Introduction</h2>
+			<hr>
+		</article>
+	</section>
+	<div>
+		<p> The following are my accumulated notes concerning WPARs' (or Workload Partitions) configuration and administration, which is supported on AIX 6.1 and above. WPARs can be created on a dedicated or shared LPAR (Logical Partition), because the LPAR's operating system image and physical resources are shared with the WPAR. WPARs also provide the ability to further isolate a system's workload without creating a full LPAR.</p>
+	<section>
+		 There are two types of WPARs,
+		<a href="#SystemWPAR">system</a> and
+		<a href="#APPWPAR">application.</a>
+		 The following filesets need to be installed on the LPAR (or global WPAR) prior to creating any type of WPAR:
+	</section>
+		<ul>
+		<p> bos.wpars</p>
+		<p> wio.common</p>
+		<p> wio.fcp</p>
+		<p> wio.vscsi</p>
+		</ul>
+		<a href="#top">Go Back to the Top</a>
+	<h3 id="SystemWPAR">System WPARs</h3>
+	<hr>
+	<p> A system WPAR is a workload partition that has filesystems created in logical volumes, and its root volume group is created from the global WPAR. You can use the <b>'smitty simplewpar_sys'</b> or <b>'mkwpar'</b> commands to create a system WPAR.
+	</p>
+		<p> 	<h4>To create and start a simple WPAR:</h4>
+	 	mkwpar -s -n WPAR_name
+		</p>
+
+		<p><h4>To stop a WPAR:</h4>
+	 	stopwpar -v WPAR_name
+		</p>
+
+		<p><h4>To remove a WPAR:</h4>
+	 	rmwpar -s WPAR_name
+		</p>
+	</div>
+	<div>
+		<p> A system WPAR can also be created with its own root volume group if one or more disk devices are allocated to the WPAR from the global WPAR. This is referred to as a rootvg system WPAR. Rootvg system WPARs can only be created by using/exporting/allocating fibre attached storage devices, fibre channel adapters, or virtual SCSI disks to the rootvg system WPAR.
+		</p>
+			<p> <h4>To make a shared system WPAR with rootvg (where /usr and /opt are shared with the global WPAR):</h4>
+				<ol>
+<p> 1. Check the physical volume configuration. Use only disk devices that are in the available state.
+	<br>
+	lspv</p>
+
+<p> 2. Create and start a shared system WPAR with rootvg:
+	<br>
+	 mkwpar -s -n WPAR_name -D rootvg=yes devname=hdisk_number</p>
+				</ol> 
+	<p>*Note: If hdisk_number is currently in a non-rootvg volume group, overwrite the non-rootvg volume group during WPAR creation:
+			<br>
+	 		mkwpar -s -n WPAR_name -D rootvg=yes devname=hdisk_number -O</p>
+			</p>
+			<p> <h4>To create a detached system WPAR with rootvg (where /usr and /opt are NOT shared with the global WPAR):</h4>
+				<ol>
+<p>1. Check the physical volume configuration. Use only disk devices that are in the available state.
+	<br>
+	lspv</p>
+
+<p>2. Create and start a detached system WPAR with rootvg:
+	<br>
+	 mkwpar -s -n WPAR_name -D rootvg=yes devname=hdisk_number -l</p>
+				</ol>
+<p>After the WPAR's creation, use the <b>'chwpar'</b> command to change the WPAR's disk configuration.</p>
+	<p><h4>To list and delete a WPAR's disk(s):</h4>
+		<ul>
+	 	lspwar -Da devname WPAR_name | grep hdisk
+		<br>
+	 	chwpar -K -D devname=hdisk_number WPAR_name</p>
+		</ul>
+			</p>
+		<a href="#top">Go Back to the Top</a>
+	</div>
+	<div>
+		<h3 id="CREWPAR">CRE (Compatibility Runtime Environment) WPAR</h3>
+		<hr>
+		<p>CRE (Compatibility Runtime Environment) WPAR is a system WPAR running AIX 5.2 or AIX 5.3 binaries and libraries on a global WPAR running AIX 7.1 or higher. It is also known as a VWPAR (Versioned Workload Partition). A CRE WPAR should be created as a detached system WPAR, due to /usr. /opt, and /var running AIX 5.2/5.3 binaries and libraries. The following filesets need to be installed on the global WPAR before creating the CRE WPAR:
+		</p>
+		<ul>
+		<p> bos.wpars</p>
+		<p> vwpar.52</p>
+		<p> vwpar.53</p>
+		<p> vwpar.common</p>
+		<p> vwpar.images.52</p>
+		<p> vwpar.images.53</p>
+		<p> vwpar.images.base</p>
+		<p> wio.common</p>
+		<p> wio.fcp</p>
+		</ul>
+		<p>You can load the AIX 5.2/5.3 environment from a mksysb image during the CRE WPAR's creation using the following command:
+		<br>
+	mkwpar -B /WPAR_mksysb_file -C -A -r -v -s -N address=network_address -n WPAR_name -D devname=hdisk_number -D devname=hdisk_number rootvg=yes -l
+		</p>
+		<p><h4>To check CRE (Compatibility Runtime Environment) WPAR's operating system type:</h4>
+	lswpar -L <WPAR_name> |grep OStype
+		</p>	
+		<p>*Note: Possible numeric values for OStype:
+		<br>
+		<p>OStype = 0 (Native or the same as global WPAR's oslevel)</p>
+	        <p>OStype = 1 (AIX 5.2)</p>
+	        <p>OStype = 1024 (AIX 5.3)</p>
+		</p>
+		<br>
+		<p><h4>To backup and restore a CRE WPAR:</h4>
+			<ul>
+			savewpar -f /backup_filename -i WPAR_name
+			<br>
+			lswpar WPAR_name
+			<br>
+			rmwpar -F WPAR_name
+			<br>
+			lswpar WPAR_name
+			<br>
+			cfgmgr
+			<br>
+			lspv
+			<br>
+			restwpar -a -f /backup_filename -n WPAR_name
+			<br>
+			lswpar WPAR_name
+			<br>
+			startwpar WPAR_name
+			<br>
+			lswpar WPAR_name
+			</ul>
+		</p>
+		<a href="#top">Go Back to the Top</a>
+	</div>
+	<div>
+		<h3 id="BOOTSET">WPAR with a bootset</h3>
+		<hr>
+		<p>Bootset is a set of disk(s) or filesystem(s) that are used for boot by the rootvg system WPAR. A disk or filesystem that belongs to a bootset can NOT be removed unless the bootset is removed first. The maximum value for the bootset ID is 8.
+		</p>
+	<p><h4>To create a WPAR with a bootset of disks:</h4>
+	    mkwpar -r -v -t -i -s -n WPAR_name -D devname=hdisk_number -D devname=hdisk_number rootvg=yes -l
+	<br>
+	    lswpar
+	<br>
+	    lswpar -Da devname WPAR_name|grep hdisk
+	<br>
+	    lswpar -Br
+	<br>
+	    chwpar -B devname=hdisk_number WPAR_name
+	<br>	
+	    lswpar -Br	
+	</p>					
+		*Note: Both hdisk devices should show RootVG = yes.
+			    If not,:
+			<br>
+			     stopwpar WPAR_name
+			<br>
+			     startwpar WPAR_name
+		</p>
+		<p>	<h4>To boot a WPAR from an alternate bootset:</h4>
+	     chwpar -B devname=hdisk_number WPAR_name
+		<br>
+	     lswpar -Br
+		<br>
+	     chwpar -D devname=hdisk_number rootvg=no WPAR_name
+		<br>
+	     lswpar -Br
+		<br>
+	     chwpar -K -B bootset=Bootset_ID WPAR_name
+		<br>
+	     stopwpar WPAR_name
+		<br>
+	     startwpar WPAR_name
+		<br>
+	     lswpar -Br
+		</p>
+	<a href="#top">Go Back to the Top</a>
+	</div>
+	<div>
+		<h3 id="WPARNETWORK">WPAR with its own network</h3>
+		<hr>
+		<p>WPARs can be created with its own network configuration. This enables the administrator to further isolate the WPAR's network traffic, and meet specific network security requirements. WPARs with their own network configuration can use physical interfaces, virtual interfaces, etherchannels, and virtual local area network (VLAN) interfaces. Unless specified, WPARs created with its own network configuration are classified as IPv4.
+		</p>
+<h4>To create and start a WPAR with an IPv4 network address:</h4>
+  mkwpar -s -n WPAR_name -N address=network_address netmask=network_mask -h hostname
+
+<h4>To list a WPAR's network configuration:</h4>
+ lswpar -N WPAR_name
+
+<p>WPARs can also be created with its own network routing table.</p>
+	<h4>To create a detached routing specific WPAR:</h4>
+		mkwpar -A -r -v -s -n WPAR_name -N address=network_address -I rtdest=default rtgateway=gateway_server's_network_address -h hostname
+
+	<h4>To view a WPAR's routing table:</h4>
+		lswpar -I WPAR_name
+		<br>
+		netstat -r -@ WPAR_name
+		<br>
+		netstat -rn -@ WPAR_name
+
+<h4>Execute the following commands to setup a WPAR using IPv6 network addressing:</h4>
+<ol>
+<p>1. Run <b>'autoconf6'</b> on the global WPAR to get the link local IP address on the global WPAR:
+	<h4>To generate the local IPv6 address (beginning with 'fe80::'):</h4>
+		autoconf6 -A</p>
+	<br>	
+	<p>Make note of network address beginning with 'fe80::'
+	<br>			
+		netstat -in</p>
+	<br>	
+	<p>Make note of the one line beginning with 'inet6' (which is the local IPv6 address):		<br>	
+		ifconfig en0</p>	
+	<br>
+	<p>Start and check the Neighbor Discovery Protocol daemon:	
+	<br>	
+		startsrc -s ndpd-host
+	<br>
+		lssrc -s ndpd-host</p>
+	<br>
+	<p>Temporarily enable IPv6 forwarding:
+	<br>
+		no -o ip6forwarding=1
+	<br>		
+		ifconfig en0</p>
+	<br>
+			*Note: After starting 'ndpd-host' service, ifconfig output shows 2 lines beginning with 'inet6'. The IPv6 address beginning with '2000 or above' is the global address (generated after connecting to the IPv6 router, which would have the 'ndpd-router' service running). 
+
+<p>2. To create and start a detached rootvg system WPAR using an IPv6 network address:
+	<br>
+	lspv
+	<br>
+	mkwpar -A -r -v -s -n WPAR_name -N address6=IPv6_local_address_beginning_with_'fe80::'_incremented_by_one interface=en_number prefixlen=The_number_in_the_global/local_IPv6_address_that_is_followed_by_a_forward_slash(/) -D devname=hdisk_number rootvg=yes -l
+	<br>
+</p>
+</ol>
+<h4>Ex:</h4> 
+# ifconfig en0
+<br>
+en0: flags=1e084863,14c0 UP,BROADCAST,NOTRAILERS,RUNNING,SIMPLEX,MULTICAST,GROUPRT,64BIT,CHECKSUM_OFFLOAD(ACTIVE),LARGESEND,CHAIN
+<br>
+        inet 9.3.66.109 netmask 0xfffffe00 broadcast 9.3.67.255
+<br>
+        inet6 2002:926:3e2:66:c0e6:99ff:fe54:9002/64
+<br>
+        inet6 fe80::c0e6:99ff:fe54:9002/64
+<br>
+        inet6 2002:903:15f:66:c0e6:99ff:fe54:9002/64
+<br>
+         tcp_sendspace 262144 tcp_recvspace 262144 rfc1323 1
+<br>
+# mkwpar -A -r -v -s -n wpar -N address6=fe80::c0e6:99ff:fe54:9003 interface=en0 prefixlen=64 -D devname=hdisk1 rootvg=yes -l
+<br>
+# lswpar wpar
+<br>
+# lswpar -N wpar
+<br>
+# ping wpar
+<br>
+# topas -@ WPAR_name
+<br>					
+	<p>*Note: <b>'topas -@ WPAR_name'</b> was run simultaneously as the <b>'ping wpar'</b> command in a different telnet session.</p>
+	</div>
+	<a href="#top">Go Back to the Top</a>
+	<div>
+		<h3 id="RBAC">Enhanced RBAC on a WPAR</h3>
+		<hr>
+			<p>Enhanced RBAC (Role based access control) can be administered on a WPAR, and increases the security threshold on the WPAR. Enhanced RBAC needs to be enabled on the global WPAR before it can be administered on the WPAR.
+			</p>
+		<h4>To check for enhanced RBAC status on the global WPAR:</h4>
+		lsattr -El sys0 -a enhanced_RBAC
+
+		<h4>To enable enhanced RBAC on the global WPAR:</h4>
+		chdev -l sys0 -a enhanced_RBAC=true
+		<br>
+		<h4>Run the following commands to create WPARs as a RBAC user:</h4>
+		<ol>
+<p>1. On the global WPAR, create authorizations for the role:
+<br>
+mkauth new_authorization_name
+<br>
+OR 
+<br>
+smitty rbac
+<br>
+<h4>Ex:</h4> <p># mkauth test_wpar</p>
+2. Set the role to the RBAC user on the global WPAR:
+<br>
+setsecattr -c accessauths=new_authorization_name /full_path_of_the_command
+<br>
+<h4>Ex:</h4>
+# setsecattr -c accessauths=test_wpar /usr/sbin/mkwpar
+<br>
+# setsecattr -c accessauths=test_wpar /usr/sbin/lswpar
+<br>
+# setsecattr -c accessauths=test_wpar /usr/sbin/chwpar
+<br>
+# setsecattr -c accessauths=test_wpar /usr/sbin/rmwpar
+<br>
+# setsecattr -c accessauths=test_wpar /usr/sbin/wparexec
+<br>
+# setsecattr -c accessauths=test_wpar /usr/sbin/stopwpar
+<br>
+# setsecattr -c accessauths=test_wpar /usr/sbin/clogin
+
+<p>mkrole authorizations=new_authorization_name new_role_name</p>
+
+<h4>Ex:</h4> <p># mkrole authorizations=test_wpar wpar_role</p>
+<br>
+mkuser roles=new_role_name user
+<br>
+<h4>Ex:</h4> <p># mkuser roles=wpar_role marie</p>
+<br>
+setkst
+<br>
+passwd user
+<br>
+su - user
+<br>
+swrole new_role_name
+<br>
+<h4>Ex:</h4> $ swrole wpar_role
+<br>
+$ rolelist -e
+<br>
+$ lswpar
+<br>
+$ mkwpar -v -A -s -r -n WPAR_name -D devname=hdisk_number rootvg=yes -l -N address=network_address interface=en_number
+<br>
+</p>
+		</ol>
+	</div>
+	<a href="#top">Go Back to the Top</a>
+	<div>
+		<h3 id="APPWPAR">Application WPARs</h3>
+		<hr>
+			<p>An application WPAR hosts one or more applications. The <b>'wparexec'</b> command creates the application WPAR. The command used to start an application(s) will be used as the argument for the <b>'wparexec'</b> command. Once the application(s) exits, that specific application WPAR ceases to exist. An application WPAR will share the global WPAR's filesystem, and will NOT run system service daemons.
+			</p>
+			<p>A user can test an application WPAR's functionality by using AIX performance statistical commands as an argument to the <b>'wparexec'</b> command:
+<br>
+# wparexec -v -n WPAR_name /full_path_of_the_command_that_preferably_runs_for_some_time
+			</p>
+<h4>Ex:</h4>
+# wparexec -v -n appwpar /usr/bin/vmstat -Itw 120 600
+<br>
+wparexec: Verifying file systems...
+<br>
+Workload partition appwpar created successfully.
+<br>
+Starting workload partition 'appwpar'.
+<br>
+Mounting all workload partition file systems.
+<br>
+Loading workload partition.
+<p>
+
+appwpar configuration: @lcpu=8 @mem=4352MB @ent=2.00
+<br>
+   kthr            memory                         page                       faults                 cpu             time
+<br>
+----------- --------------------- ------------------------------------ ------------------ ----------------------- --------
+<br>
+                     @          @                                         @     @                             @
+<br>
+  r   b   p        avm        fre    fi    fo    pi    po    fr     sr    in    sy    cs us sy id wa    pc    ec  hr mi se
+<br>
+  0   0   0     277483     204786     0     0     0     0     0      0     0     2     1 18 82  -  -   0.00   0.0 15:41:11
+<br>
+  0   0   0     277488     204778     0     0     0     0     0      0     0     2     1  2 98  -  -   0.00   0.0 15:43:11
+<br>
+  0   0   0     277489     204775     0     0     0     0     0      0     0     2     0  3 97  -  -   0.00   0.0 15:45:11
+<br>
+  0   0   0     277528     204732     0     0     0     0     0      0     0     2     0  2 98  -  -   0.00   0.0 15:47:11
+<br>
+  0   0   0     277529     204730     0     0     0     0     0      0     0     2     0 36 64  -  -   0.00   0.0 15:49:11
+<br>
+  0   0   0     277565     204715     0     0     0     0     0      0     0     2     1  2 98  -  -   0.00   0.0 15:51:11
+<br>
+  0   0   0     277567     204710     0     0     0     0     0      0     0     2     1  2 98  -  -   0.00   0.0 15:53:11
+<br>
+  0   0   0     277567     204732     0     0     0     0     0      0     0     2     0 14 86  -  -   0.00   0.0 15:55:11
+<br>
+  0   0   0     277606     204690     0     0     0     0     0      0     0     2     0  3 97  -  -   0.00   0.0 15:57:11
+<br>
+  0   0   0     277607     204687     0     0     0     0     0      0     0     2     0  3 97  -  -   0.00   0.0 15:59:11
+</p>
+. . . .
+<br>
+# lswpar
+<br>
+<h4>Ex:</h4>
+# lswpar
+<p>
+Name           State  Type  Hostname       Directory           RootVG WPAR
+<br>
+----------------------------------------------------------------------------------------------------
+<br>
+appwpar  	A      A     appwpar  		/                   no
+</p>
+			</p>
+	</div>
+	<a href="#top">Go Back to the Top</a>
+	<footer>
+		<hr>
+		<img src="../../Responsive-Portfolio/Basic-Portfolio-master/images/Marie.JPG" width="100" height="100">
+		<p>Author Marie Laborde has worked in IBM's AIX Remote Technical Support Center for several years.</p>
+	</footer>
+</body>
+</html>
