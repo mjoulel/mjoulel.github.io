@@ -1,0 +1,111 @@
+<!-- Marie Laborde
+Final Project - Portfolio
+5/20/2017 -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Marie's Portfolio</title>
+
+    <!-- To adapt page to mobile devices screen -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Custom Fonts -->
+    <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+
+    <link rel="stylesheet" href="https://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.css">
+    <script src="https://code.jquery.com/jquery-1.11.3.min.js"></script>
+    <!-- <script src="https://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.js"></script> -->
+
+    <!-- Here we include bootstrap. This will be made available to all of the generated HTML/JS that React generates-->
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
+
+    <style>
+        @media screen and (max-width: 480px){
+
+            <!-- Bootstrap Core CSS -->
+            <link href="./bootstrap.min.css" rel="stylesheet">
+
+            <!-- Custom CSS -->
+    		<link href="./contact.css" rel="stylesheet" type="text/css" media="screen">
+        }
+        @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi){
+            /*Retina specific stuff here*/
+        }
+    </style>
+
+</head>
+
+<!-- <body style="margin-left: 40px;"> -->
+<body>
+    
+    <div data-role="header">
+        <div data-role="navbar">
+            <a href="./index.html" class="w3-bar-item w3-button w3-xxlarge"><i class="fa fa-home"></i></a>
+            <a href="http://www.linkedin.com/in/marielaborde" class="w3-bar-item w3-button w3-xxlarge"><i class="fa fa-linkedin-square"></i></a>
+            <a href="https://github.com/mjoulel" class="w3-bar-item w3-button w3-xxlarge"><i class="fa fa-github"></i></a> 
+            <a href="./techdocs.html" class="w3-bar-item w3-button w3-xxlarge"><i class="fa fa-files-o"></i></a> 
+            <a href="./grpProjs.html" class="w3-bar-item w3-button w3-xxlarge"><i class="fa fa-group"></i></a> 
+            <a href="./resume.html" class="w3-bar-item w3-button w3-xxlarge"><i class="fa fa-html5"></i></a> 
+        </div>
+    </div>
+
+    <div style="margin-right:70px">
+
+    <div class="w3-container">
+
+    <!-- Page Content -->
+    <main class="container">
+        <section class="main-section">
+            <!-- <section class="sidebar"> -->
+                <!-- <h1>Contact</h1> -->
+                <h1 id="CONTACT">Contact Me</h1>
+                    <!-- On submit, send the form-data to a file named "/action_page.php" (to process the input) -->
+                    <form id="contact-form" action="/action_page.php" method="get">
+                        <ul>
+                            <li> 
+                                <label for="name">Name</label>
+                                    <input type="text" class="form-control" rows="1" id="name" name="name" placeholder="John Smith" required="required">
+                            </li>
+                            <li> 
+                                <label for="email">Email</label>
+                                <input type="email" class="form-control" rows="1" id="email" name="email" placeholder="example@gmail.com" required="required">
+                            </li>
+                            <li> 
+                                <label for="message">Message</label>
+                                <textarea class="form-control" rows="3" id="message" name="message" required="required"></textarea>
+                            </li>
+                        </ul> 
+                        <br>
+                        <input type="submit" value="Submit">
+                    </form>
+        </section>
+    </main>
+
+    <!-- If an input field contains invalid data, display a message -->
+    <input id="id1" type="number" min="100" max="300" required>
+    <button onclick="myFunction()">OK</button>
+
+    <p id="demo"></p>
+
+    <script>
+        function myFunction() {
+            var inpObj = document.getElementById("id1");
+            if (inpObj.checkValidity() == false) {
+            document.getElementById("demo").innerHTML = inpObj.validationMessage;
+            }
+        }
+    </script>    
+    <!-- <script> -->
+
+ 
+        <!-- The following changes the action URL of a form -->
+        <!-- document.getElementById("myForm").action = "/action_page.php"; -->
+
+        <!-- Returns the URL for where to send the form data when a form is submitted -->
+        <!-- var x = document.getElementById("myForm").action; -->
+    <!-- </script> -->
+</body>
+</html>

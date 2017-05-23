@@ -1,0 +1,82 @@
+html{
+    height: 100%;
+}
+
+/**
+ * Static: Default positioning
+ **/
+.box-set {
+  background: #eaeaed;
+}
+.box {
+  background: #2db34a;
+  height: 80px;
+  width: 80px;
+}
+
+/* Standard Rules */
+* {
+  box-sizing: border-box;
+  margin: 0;
+
+h1{
+    font-size: 30px;
+    font-family: "Arial",Arial;
+    font-weight: 700;
+    line-height: 50px;
+    border-bottom: 3px solid #ddd;
+    padding-bottom: 20px;
+    margin-bottom: 20px;
+    color: #4aaaa5;
+}
+
+/*main*/
+
+main {
+    padding-top: 130px;
+}
+.main-section {
+    background: #fff;
+    padding: 30px;
+    margin: 0 0 40px 0;
+    width: 100%;
+    max-width: 650px;
+    float: left;
+    border: 1px solid #ddd;
+}
+
+
+/*contact page*/
+
+#contact-form ul {
+    margin-bottom: 20px;
+}
+#contact-form li {
+    margin-bottom: 10px;
+}
+label,
+input[type=text],
+input[type=email],
+textarea {
+    display: block;
+    width: 100%;
+}
+input[type=text],
+input[type=email],
+textarea {
+    height: 35px;
+    border: 1px solid #ddd;
+    padding: 0 10px;
+    font-size: 14px;
+}
+textarea {
+    height: 200px;
+}
+input[type=submit] {
+    background: #4aaaa5;
+    border: 0 none;
+    color: #fff;
+    font-size: 18px;
+    padding: 10px 30px;
+    cursor: pointer;
+}
